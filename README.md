@@ -132,3 +132,11 @@ SQL 草稿位于 `supabase/schema.sql`。
 ## 简历描述参考
 
 开发论文知识库助手，支持 PDF 上传、文本解析、分块向量化、基于 pgvector 的语义检索和带引用来源的 RAG 问答。实现用户隔离、文档索引状态管理、top-k 检索、引用页码展示，并构建基础评估集统计 Recall@5、Citation Hit Rate 和响应延迟，项目可部署至 Vercel/Supabase。
+
+## 学习记录
+
+- 我完成了 Next.js 项目的 GitHub 首次上传。
+- 我理解了项目根目录里 `src`、`public`、`package.json`、`README.md` 的作用。
+- 新建了注册页面
+- 我知道了 `node_modules`、`.next`、`.env.local` 不应该上传 GitHub。
+- 下一步准备接入 Supabase Auth，实现真实登录和注册。
