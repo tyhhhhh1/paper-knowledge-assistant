@@ -140,3 +140,5 @@ SQL 草稿位于 `supabase/schema.sql`。
 - 新建了注册页面
 - 我知道了 `node_modules`、`.next`、`.env.local` 不应该上传 GitHub。
 - 下一步准备接入 Supabase Auth，实现真实登录和注册。
+
+- 接入supabase auth，实现登录和注册
