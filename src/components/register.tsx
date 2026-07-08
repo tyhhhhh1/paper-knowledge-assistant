@@ -1,5 +1,6 @@
 "use client";
 
+import { createClient } from "@/lib/client";
 import { Loader2, UserPlus, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,7 +13,7 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -31,10 +32,21 @@ export function RegisterForm() {
     }
 
     setLoading(true);
-    window.setTimeout(() => {
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
       setLoading(false);
-      router.push("/login");
-    }, 620);
+      setError(error.message);
+      return;
+    }
+
+    router.push("/login");
+    router.refresh();
   }
 
   return (

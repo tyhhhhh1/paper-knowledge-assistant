@@ -1,5 +1,5 @@
 "use client";
-
+import { createClient } from "@/lib/client";
 import { Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,21 +11,32 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setError("");
 
-    if (!email.includes("@") || password.length < 6) {
-      setError("请输入有效邮箱，密码至少 6 位。");
-      return;
-    }
-
-    setLoading(true);
-    window.setTimeout(() => {
-      setLoading(false);
-      router.push("/dashboard");
-    }, 620);
+  if (!email.includes("@") || password.length < 6) {
+    setError("请输入有效邮箱，密码至少 6 位。");
+    return;
   }
+
+  setLoading(true);
+
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    setLoading(false);
+    setError(error.message);
+    return;
+  }
+
+  router.push("/dashboard");
+  router.refresh();
+}
   
   return (
     <form
@@ -77,7 +88,7 @@ export function LoginForm() {
         ) : (
           <LogIn size={18} aria-hidden="true" />
         )}
-        登录/注册
+        登录
       </button>
     </form>
   );
