@@ -1,22 +1,77 @@
-import { ArrowRight, Database, FileText, Search } from "lucide-react";
+import { Database, FileText, Search } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { UploadPanel } from "@/components/upload-panel";
 import { requireUser } from "@/lib/auth";
-import { documents } from "@/lib/mock-data";
+import type { DocumentStatus } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
+
+type DbDocument = {
+  id: string;
+  title: string;
+  file_url: string;
+  status: string;
+  page_count: number;
+  chunk_count: number;
+  created_at: string;
+};
+
+const allowedStatuses: DocumentStatus[] = [
+  "uploaded",
+  "parsing",
+  "parsed",
+  "indexed",
+  "failed",
+];
+
+function normalizeStatus(status: string): DocumentStatus {
+  if (allowedStatuses.includes(status as DocumentStatus)) {
+    return status as DocumentStatus;
+  }
+
+  return "uploaded";
+}
+
+function getFileName(filePath: string, fallback: string) {
+  return filePath.split("/").pop() || fallback;
+}
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const indexedCount = documents.filter(
+  const supabase = await createClient();
+
+  const { data: dbDocuments, error: documentsError } = await supabase
+    .from("documents")
+    .select("id, title, file_url, status, page_count, chunk_count, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const visibleDocuments = ((dbDocuments ?? []) as DbDocument[]).map((document) => ({
+    id: document.id,
+    title: document.title,
+    fileName: getFileName(document.file_url, document.title),
+    fileSize: "Supabase Storage",
+    status: normalizeStatus(document.status),
+    pages: document.page_count,
+    chunks: document.chunk_count,
+    uploadedAt: new Date(document.created_at).toLocaleString("zh-CN"),
+    ownerEmail: user.email ?? "",
+    summary: "已上传到 Supabase Storage，等待解析、切块和向量化。",
+  }));
+
+  const indexedCount = visibleDocuments.filter(
     (document) => document.status === "indexed",
   ).length;
-  const chunkCount = documents.reduce((total, document) => total + document.chunks, 0);
+  const chunkCount = visibleDocuments.reduce(
+    (total, document) => total + document.chunks,
+    0,
+  );
 
   return (
     <AppShell
       title="文档阅读助手"
-      description="你已经登录。这个页面会读取 Supabase 会话，未登录用户会被自动送回登录页。"
+      description="这里读取 Supabase documents 表，只展示当前登录用户自己的文档记录。"
       userEmail={user.email}
       action={
         <Link
@@ -39,45 +94,60 @@ export default async function DashboardPage() {
                   论文列表
                 </h2>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  现在仍使用 mock 数据；下一步会把文档列表替换成当前用户自己的 Supabase 数据。
+                  上传成功后，documents 表里的真实记录会显示在这里。
                 </p>
               </div>
               <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                {documents.length} files
+                {visibleDocuments.length} files
               </span>
             </div>
-            <div className="divide-y divide-[var(--line)]">
-              {documents.map((document) => (
-                <article key={document.id} className="p-4 transition hover:bg-zinc-50">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="font-semibold text-zinc-950">
-                          {document.title}
-                        </h3>
-                        <StatusPill status={document.status} />
+
+            {documentsError ? (
+              <div className="p-6 text-sm text-[var(--rose)]">
+                读取 documents 失败：{documentsError.message}
+              </div>
+            ) : null}
+
+            {!documentsError && visibleDocuments.length === 0 ? (
+              <div className="p-8 text-sm leading-6 text-[var(--muted)]">
+                还没有上传论文。请选择一个 PDF 上传，成功后这里会出现真实文档记录。
+              </div>
+            ) : null}
+
+            {!documentsError && visibleDocuments.length > 0 ? (
+              <div className="divide-y divide-[var(--line)]">
+                {visibleDocuments.map((document) => (
+                  <article
+                    key={document.id}
+                    className="p-4 transition hover:bg-zinc-50"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className="font-semibold text-zinc-950">
+                            {document.title}
+                          </h3>
+                          <StatusPill status={document.status} />
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                          {document.summary}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-600">
+                          <span>{document.fileName}</span>
+                          <span>{document.fileSize}</span>
+                          <span>{document.pages} 页</span>
+                          <span>{document.chunks} chunks</span>
+                          <span>{document.uploadedAt}</span>
+                        </div>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                        {document.summary}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-600">
-                        <span>{document.fileName}</span>
-                        <span>{document.fileSize}</span>
-                        <span>{document.pages} 页</span>
-                        <span>{document.chunks} chunks</span>
-                      </div>
+                      <span className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-[var(--line)] bg-white px-3 text-sm font-medium text-zinc-500">
+                        详情待接入
+                      </span>
                     </div>
-                    <Link
-                      href={`/documents/${document.id}`}
-                      className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
-                    >
-                      查看
-                      <ArrowRight size={16} aria-hidden="true" />
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
           </section>
         </div>
 
@@ -89,7 +159,7 @@ export default async function DashboardPage() {
             </h2>
             <dl className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-md bg-zinc-50 p-3">
-                <dt className="text-xs text-[var(--muted)]">已入库论文</dt>
+                <dt className="text-xs text-[var(--muted)]">已索引论文</dt>
                 <dd className="mt-1 text-2xl font-semibold text-zinc-950">
                   {indexedCount}
                 </dd>
@@ -110,9 +180,9 @@ export default async function DashboardPage() {
             </h2>
             <ol className="mt-4 space-y-3 text-sm leading-6 text-zinc-700">
               <li>1. Supabase Auth 已接入注册和登录。</li>
-              <li>2. 受保护页面已能识别登录状态。</li>
-              <li>3. 导航栏已显示当前登录邮箱。</li>
-              <li>4. 下一步把 mock 文档替换为用户自己的数据库记录。</li>
+              <li>2. 上传 PDF 后会写入 Storage 和 documents 表。</li>
+              <li>3. dashboard 已读取当前用户的真实 documents。</li>
+              <li>4. 下一步可以把文档详情页也接到数据库。</li>
             </ol>
           </article>
         </aside>

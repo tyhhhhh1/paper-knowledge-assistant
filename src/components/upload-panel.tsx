@@ -1,5 +1,5 @@
 "use client";
-
+import { createClient } from "@/lib/supabase/client";
 import { AlertCircle, CheckCircle2, FileUp, Loader2, UploadCloud } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatBytes } from "@/lib/utils";
@@ -43,29 +43,75 @@ export function UploadPanel() {
     setMessage("文件已就绪，可以开始上传。");
   }
 
-  function startUpload() {
-    if (!file || state === "uploading") return;
+  async function startUpload() {
+  if (!file || state === "uploading") return;
 
-    setState("uploading");
-    setProgress(8);
-    setMessage("正在上传 PDF 并创建文档记录...");
+  setState("uploading");
+  setProgress(10);
+  setMessage("正在确认登录状态...");
 
-    intervalRef.current = setInterval(() => {
-      setProgress((current) => {
-        const next = Math.min(current + 18, 100);
+  const supabase = createClient();
 
-        if (next >= 100) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          setState("done");
-          setMessage("上传完成。下一阶段会接入 Supabase Storage 和解析队列。");
-        } else if (next >= 64) {
-          setMessage("正在模拟解析文本、切块和向量化...");
-        }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-        return next;
-      });
-    }, 420);
+  console.log("current user:", user);
+
+  if (userError || !user) {
+    setState("error");
+    setMessage("请先登录后再上传。");
+    return;
   }
+
+  const filePath = `${user.id}/${Date.now()}-${file.name}`;
+
+  setProgress(45);
+  setMessage("正在上传 PDF 到 Storage...");
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("papers")
+    .upload(filePath, file);
+
+  console.log("uploadData:", uploadData);
+
+  if (uploadError) {
+    setState("error");
+    setMessage(uploadError.message);
+    return;
+  }
+  setProgress(75);
+setMessage("正在写入 documents 记录...");
+
+const { data: documentData, error: insertError } = await supabase
+  .from("documents")
+  .insert({
+    user_id: user.id,
+    title: file.name.replace(/\.pdf$/i, ""),
+    file_url: filePath,
+    status: "uploaded",
+  })
+  .select()
+  .single();
+
+console.log("documentData:", documentData);
+console.log("insertError:", insertError);
+
+if (insertError) {
+  setState("error");
+  setMessage(`PDF 已上传，但文档记录创建失败：${insertError.message}`);
+  return;
+}
+
+setState("done");
+setProgress(100);
+setMessage("PDF 已上传，文档记录已创建。");
+
+  setState("done");
+  setProgress(100);
+  setMessage("PDF 已上传到 Supabase Storage。");
+}
 
   const isError = state === "error";
 
