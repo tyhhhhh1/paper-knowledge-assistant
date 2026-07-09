@@ -131,7 +131,9 @@ export function runLocalEvaluation(): EvalCase[] {
       ? item.expectedSourcePages.some((page) => retrievedPages.includes(page))
       : false;
     const citationHit = item.expectedSourcePages.length
-      ? item.expectedSourcePages.some((page) => retrievedPages.slice(0, 3).includes(page))
+      ? item.expectedSourcePages.some((page) =>
+          retrievedPages.slice(0, 3).includes(page),
+        )
       : false;
     const keywordMatch = item.expectedKeywords.some((keyword) =>
       answer.includes(keyword.toLowerCase()),

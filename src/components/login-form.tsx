@@ -1,43 +1,45 @@
 "use client";
-import { createClient } from "@/lib/client";
+
+import { createClient } from "@/lib/supabase/client";
 import { Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("student@example.com");
-  const [password, setPassword] = useState("demo-password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setError("");
+    event.preventDefault();
+    setError("");
 
-  if (!email.includes("@") || password.length < 6) {
-    setError("请输入有效邮箱，密码至少 6 位。");
-    return;
+    if (!email.includes("@") || password.length < 6) {
+      setError("请输入有效邮箱，密码至少 6 位。");
+      return;
+    }
+
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setLoading(false);
+      setError(signInError.message);
+      return;
+    }
+
+    const nextPath = new URLSearchParams(window.location.search).get("next");
+    router.push(nextPath || "/dashboard");
+    router.refresh();
   }
 
-  setLoading(true);
-
-  const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    setLoading(false);
-    setError(error.message);
-    return;
-  }
-
-  router.push("/dashboard");
-  router.refresh();
-}
-  
   return (
     <form
       onSubmit={submit}
@@ -49,7 +51,10 @@ export function LoginForm() {
         </span>
         <div>
           <h1 className="text-xl font-semibold text-zinc-950">登录知识库</h1>
-          </div>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            登录后页面会自动识别你的 Supabase 会话。
+          </p>
+        </div>
       </div>
 
       <label className="block text-sm font-medium text-zinc-800">
@@ -59,6 +64,7 @@ export function LoginForm() {
           onChange={(event) => setEmail(event.target.value)}
           type="email"
           className="mt-2 h-11 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm text-zinc-950"
+          placeholder="you@example.com"
         />
       </label>
 
@@ -69,6 +75,7 @@ export function LoginForm() {
           onChange={(event) => setPassword(event.target.value)}
           type="password"
           className="mt-2 h-11 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm text-zinc-950"
+          placeholder="至少 6 位"
         />
       </label>
 
@@ -81,7 +88,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[var(--black)] px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+        className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[var(--teal)] px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
       >
         {loading ? (
           <Loader2 className="animate-spin" size={18} aria-hidden="true" />

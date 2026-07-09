@@ -1,11 +1,15 @@
 import { AppShell } from "@/components/app-shell";
 import { ChatWorkspace } from "@/components/chat-workspace";
+import { requireUser } from "@/lib/auth";
 
-export default function ChatPage() {
+export default async function ChatPage() {
+  const user = await requireUser();
+
   return (
     <AppShell
       title="论文问答"
-      description="模拟 query embedding、向量检索、prompt 组装和带引用来源回答。下一阶段将把这些动作替换为真实 API。"
+      description="这个页面现在是受保护页面：只有 Supabase 登录用户能访问。问答数据仍先使用 mock RAG。"
+      userEmail={user.email}
     >
       <ChatWorkspace />
     </AppShell>

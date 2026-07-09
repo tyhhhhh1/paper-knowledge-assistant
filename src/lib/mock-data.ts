@@ -64,15 +64,14 @@ export const documents: PaperDocument[] = [
   {
     id: "TUFI",
     title: "TRY TO LEARN",
-    fileName: "DAY2",
-    fileSize: "211111 MB",
+    fileName: "DAY2.pdf",
+    fileSize: "2.1 MB",
     status: "indexed",
-    pages: 666,
-    chunks: 666,
+    pages: 6,
+    chunks: 6,
     uploadedAt: "2026-07-07 19:20",
     ownerEmail: "1819857409@qq.com",
-    summary:
-      "介绍 TUFI是怎么学习前端的。",
+    summary: "记录 TUFI 学习前端和 RAG 项目的过程：先跑通页面，再逐步接入真实服务。",
   },
   {
     id: "paper-colbert",
@@ -131,13 +130,13 @@ export const chunks: Chunk[] = [
       "Experiments evaluate open-domain question answering, abstractive generation, and fact verification. The system improves factuality when relevant passages are retrieved successfully.",
   },
   {
-    id: "chunk-1",
+    id: "chunk-tufi-1",
     documentId: "TUFI",
     pageNumber: 2,
     chunkIndex: 7,
     similarity: 0.91,
     content:
-      "加油加油",
+      "学习前端时先不要追求一次全懂。先改一个页面、一个数据、一个按钮，再把这些小闭环串成完整项目。",
   },
   {
     id: "chunk-4",
@@ -213,13 +212,13 @@ export const evalCases: EvalCase[] = [
   },
   {
     id: "eval-5",
-    question: "为什么会失败？",
-    expectedKeywords: ["OCR", "scanned", "parsing"],
-    expectedSourcePages: [],
-    recallAt5: false,
-    citationHit: false,
-    keywordMatch: false,
-    latencyMs: 842,
+    question: "为什么先做页面再接真实后端？",
+    expectedKeywords: ["React", "state", "mock"],
+    expectedSourcePages: [2],
+    recallAt5: true,
+    citationHit: true,
+    keywordMatch: true,
+    latencyMs: 960,
   },
 ];
 

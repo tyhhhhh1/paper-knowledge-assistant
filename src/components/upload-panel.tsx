@@ -78,7 +78,7 @@ export function UploadPanel() {
             上传论文 PDF
           </h2>
           <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-            第一版先跑通交互，后续将替换为真实 Storage、PDF 解析和 embedding 写入。
+            当前仍是前端模拟上传；后续会替换为真实 Storage、PDF 解析和 embedding 写入。
           </p>
         </div>
         <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50">

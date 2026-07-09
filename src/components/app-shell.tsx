@@ -2,12 +2,13 @@ import {
   BarChart3,
   FileText,
   Library,
-  LogOut,
   MessageSquareText,
   UploadCloud,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
   { href: "/dashboard", label: "文档库", icon: Library },
@@ -19,6 +20,7 @@ type AppShellProps = {
   children: ReactNode;
   title: string;
   description: string;
+  userEmail?: string | null;
   action?: ReactNode;
 };
 
@@ -26,6 +28,7 @@ export function AppShell({
   children,
   title,
   description,
+  userEmail,
   action,
 }: AppShellProps) {
   return (
@@ -38,7 +41,7 @@ export function AppShell({
             </span>
             <span>
               <span className="block text-base font-semibold text-zinc-950">
-                TUFI论文助手
+                TUFI 论文助手
               </span>
               <span className="block text-xs text-[var(--muted)]">
                 PDF to chunks to vectors to cited answers
@@ -61,13 +64,13 @@ export function AppShell({
                 </Link>
               );
             })}
-            <Link
-              href="/login"
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-            >
-              <LogOut size={17} aria-hidden="true" />
-              退出
-            </Link>
+            {userEmail ? (
+              <span className="inline-flex h-10 max-w-[260px] items-center gap-2 truncate rounded-md bg-zinc-50 px-3 text-sm text-zinc-700 ring-1 ring-[var(--line)]">
+                <UserCircle size={17} aria-hidden="true" />
+                <span className="truncate">{userEmail}</span>
+              </span>
+            ) : null}
+            <LogoutButton />
           </nav>
         </div>
       </header>

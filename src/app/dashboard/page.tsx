@@ -3,9 +3,11 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { UploadPanel } from "@/components/upload-panel";
+import { requireUser } from "@/lib/auth";
 import { documents } from "@/lib/mock-data";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await requireUser();
   const indexedCount = documents.filter(
     (document) => document.status === "indexed",
   ).length;
@@ -14,7 +16,8 @@ export default function DashboardPage() {
   return (
     <AppShell
       title="文档阅读助手"
-      description="可以上传你的论文PDF，ai助手会帮你分析"
+      description="你已经登录。这个页面会读取 Supabase 会话，未登录用户会被自动送回登录页。"
+      userEmail={user.email}
       action={
         <Link
           href="/chat"
@@ -36,7 +39,7 @@ export default function DashboardPage() {
                   论文列表
                 </h2>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  empty、failed、indexed 等状态都会在这里收敛。
+                  现在仍使用 mock 数据；下一步会把文档列表替换成当前用户自己的 Supabase 数据。
                 </p>
               </div>
               <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
@@ -82,11 +85,11 @@ export default function DashboardPage() {
           <article className="rounded-md border border-[var(--line)] bg-white p-5">
             <h2 className="flex items-center gap-2 text-base font-semibold text-zinc-950">
               <Database size={18} aria-hidden="true" />
-              文档库
+              文档库概览
             </h2>
             <dl className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-md bg-zinc-50 p-3">
-                <dt className="text-xs text-[var(--muted)]">以入库论文</dt>
+                <dt className="text-xs text-[var(--muted)]">已入库论文</dt>
                 <dd className="mt-1 text-2xl font-semibold text-zinc-950">
                   {indexedCount}
                 </dd>
@@ -103,13 +106,13 @@ export default function DashboardPage() {
           <article className="rounded-md border border-[var(--line)] bg-white p-5">
             <h2 className="flex items-center gap-2 text-base font-semibold text-zinc-950">
               <FileText size={18} aria-hidden="true" />
-              下一阶段
+              当前阶段
             </h2>
             <ol className="mt-4 space-y-3 text-sm leading-6 text-zinc-700">
-              <li>1. Supabase Auth 接真实登录。</li>
-              <li>2. Storage 保存 PDF 文件。</li>
-              <li>3. PDF parser 按页提取文本。</li>
-              <li>4. pgvector 执行 top-k 检索。</li>
+              <li>1. Supabase Auth 已接入注册和登录。</li>
+              <li>2. 受保护页面已能识别登录状态。</li>
+              <li>3. 导航栏已显示当前登录邮箱。</li>
+              <li>4. 下一步把 mock 文档替换为用户自己的数据库记录。</li>
             </ol>
           </article>
         </aside>
